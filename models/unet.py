@@ -6,6 +6,7 @@ from typing import List, Optional, Tuple, Union
 import os
 import json
 
+import safetensors.torch
 import torch
 import torch.nn as nn
 import torch.utils.checkpoint
@@ -445,6 +446,7 @@ class UNet3DConditionModel(ModelMixin, ConfigMixin):
         with open(config_file, "r") as f:
             config = json.load(f)
         config["_class_name"] = cls.__name__
+        config["mid_block_type"] = "UNetMidBlock3DCrossAttn"
         config["down_block_types"] = [
             "CrossAttnDownBlock3D",
             "CrossAttnDownBlock3D",
@@ -458,12 +460,16 @@ class UNet3DConditionModel(ModelMixin, ConfigMixin):
             "CrossAttnUpBlock3D"
         ]
 
-        from diffusers.utils import WEIGHTS_NAME
+        from diffusers.utils import WEIGHTS_NAME, SAFETENSORS_WEIGHTS_NAME
         model = cls.from_config(config)
         model_file = os.path.join(pretrained_model_path, WEIGHTS_NAME)
-        if not os.path.isfile(model_file):
+        safe_model_file = os.path.join(pretrained_model_path, SAFETENSORS_WEIGHTS_NAME)
+        if not os.path.isfile(model_file) and not os.path.isfile(safe_model_file):
             raise RuntimeError(f"{model_file} does not exist")
-        state_dict = torch.load(model_file, map_location="cpu")
+        if os.path.isfile(safe_model_file):
+            state_dict = safetensors.torch.load_file(safe_model_file, device="cpu")
+        else:
+            state_dict = torch.load(model_file, map_location="cpu")
         # for k, v in model.state_dict().items():
         #     if '_temp.' in k:
         #         state_dict.update({k: v})
