@@ -607,13 +607,21 @@ class ControlNetModel3D(ModelMixin, ConfigMixin):
         model = cls.from_config(config)
         if control_path is None:
             model_file = os.path.join(pretrained_model_path, WEIGHTS_NAME)
-            state_dict = torch.load(model_file, map_location="cpu")
+            safe_file = os.path.join(pretrained_model_path, SAFETENSORS_WEIGHTS_NAME)
+            if os.path.isfile(safe_file):
+                state_dict = safetensors.torch.load_file(safe_file, device="cpu")
+            elif os.path.isfile(model_file):
+                state_dict = torch.load(model_file, map_location="cpu")
+            else:
+                raise RuntimeError(f"{model_file} does not exist")
         else:
             model_file = control_path
-            state_dict = torch.load(model_file, map_location="cpu")
+            if "safetensors" in model_file:
+                state_dict = safetensors.torch.load_file(model_file, device="cpu")
+            else:
+                state_dict = torch.load(model_file, map_location="cpu")
             state_dict = {k[14:]: state_dict[k] for k in state_dict.keys()}
-            
-        
+
         for k, v in model.state_dict().items():
             if '_temp.' in k:
                 state_dict.update({k: v})
