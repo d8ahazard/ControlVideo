@@ -2,18 +2,17 @@
 
 from dataclasses import dataclass
 from typing import Optional, Callable
-import math
+
 import torch
 import torch.nn.functional as F
-from torch import nn
-from positional_encodings.torch_encodings import PositionalEncoding2D
-
-from diffusers.configuration_utils import ConfigMixin, register_to_config
 from diffusers import ModelMixin
+from diffusers.configuration_utils import ConfigMixin, register_to_config
+from diffusers.models.attention import FeedForward, AdaLayerNorm
+from diffusers.models.attention_processor import Attention
 from diffusers.utils import BaseOutput
 from diffusers.utils.import_utils import is_xformers_available
-from diffusers.models.attention import CrossAttention, FeedForward, AdaLayerNorm
 from einops import rearrange, repeat
+from torch import nn
 
 
 @dataclass
@@ -168,7 +167,7 @@ class BasicTransformerBlock(nn.Module):
 
         # Cross-Attn
         if cross_attention_dim is not None:
-            self.attn2 = CrossAttention(
+            self.attn2 = Attention(
                 query_dim=dim,
                 cross_attention_dim=cross_attention_dim,
                 heads=num_attention_heads,

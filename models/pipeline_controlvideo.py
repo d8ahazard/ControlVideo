@@ -36,7 +36,7 @@ from diffusers.utils import (
     randn_tensor,
     BaseOutput
 )
-from diffusers.pipeline_utils import DiffusionPipeline
+from diffusers.pipelines.pipeline_utils import DiffusionPipeline
 
 from einops import rearrange
 

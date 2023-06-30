@@ -23,7 +23,7 @@ from torch.nn import functional as F
 from diffusers.configuration_utils import ConfigMixin, register_to_config
 from diffusers.utils import BaseOutput, logging
 from diffusers.models.embeddings import TimestepEmbedding, Timesteps
-from diffusers import ModelMixin
+from diffusers import ModelMixin, ControlNetModel
 from .controlnet_unet_blocks import (
     CrossAttnDownBlock3D,
     DownBlock3D,
@@ -33,7 +33,7 @@ from .controlnet_unet_blocks import (
 from .resnet import InflatedConv3d
 
 from diffusers.models.unet_2d_condition import UNet2DConditionModel
-from diffusers.models.cross_attention import AttnProcessor
+from diffusers.models.attention_processor import AttnProcessor
 
 logger = logging.get_logger(__name__)  # pylint: disable=invalid-name
 
