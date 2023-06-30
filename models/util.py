@@ -44,24 +44,84 @@ def save_videos_grid_pil(videos: List[PIL.Image.Image], path: str, rescale=False
     os.makedirs(os.path.dirname(path), exist_ok=True)
     imageio.mimsave(path, outputs, fps=fps)
 
-def read_video(video_path, video_length, width=512, height=512, frame_rate=2):
-    vr = decord.VideoReader(video_path, width=width, height=height)
-    sample_index = list(range(0, len(vr), frame_rate))[:video_length]
+
+def read_video(video_path, frame_rate: int = None, max_frames: int = None, max_resolution=None, start_time=0, end_time=None):
+    """
+
+    Args:
+        video_path: The path to the video file to read
+        frame_rate: The desired frame rate at which to read the video
+        max_frames: The maximum number of frames to read from the video. Overrides end_time
+        max_resolution: The maximum dimension of the height or width of the video.
+        start_time: The start time in the video to begin selecting frames, in milliseconds
+        end_time: The end time in the video to stop selecting frames, in milliseconds
+
+    Returns:
+
+    """
+    # Initial video read
+    vr = decord.VideoReader(video_path)
+    frame_0 = vr[0].numpy()
+    frame_0_image = PIL.Image.fromarray(frame_0)
+    width, height = frame_0_image.size
+    owidth = width
+    oheight = height
+    # Ensure width and height are divisible by 8
+    if width % 16 != 0 or height % 16 != 0:
+        # Find nearest multiple of 16
+        width = (width // 16) * 16
+        height = (height // 16) * 16
+        print(f"\nVideo width and height must be divisible by 16, resizing from {owidth}x{oheight} to {width}x{height}")
+        # Re-read the video with the adjusted width and height
+        vr = decord.VideoReader(video_path, width=width, height=height)
+        frame_0 = vr[0].numpy()
+        frame_0_image = PIL.Image.fromarray(frame_0)
+        assert frame_0_image.size == (width, height)
+
+    video_frames = len(vr)
+    video_fps = vr.get_avg_fps()
+    start_frame = 0
+    end_frame = None
+    if end_time is not None:
+        # Make sure the video is long enough to have an end time
+        if end_time > video_frames / video_fps * 1000:
+            print("Unable to use video end time, video is too short.")
+        else:
+            end_frame = int(end_time / 1000 * video_fps)
+
+    if start_time > 0:
+        start_frame = int(start_time / 1000 * video_fps)
+
+    if end_frame is None:
+        end_frame = video_frames
+
+    if frame_rate is None:
+        frame_rate = int(video_fps)
+
+    video_length = int((end_frame - start_frame) / video_fps) * frame_rate
+    print(f"Video FPS: {video_fps}, width: {width}, height: {height}, frames: {video_frames}, length: {video_length}")
+
+    sample_index = np.linspace(start_frame, end_frame - 1, video_length, dtype=np.int32).tolist()
+    if max_frames is not None:
+        sample_index = sample_index[:max_frames]
+        video_length = len(sample_index)
+
     video = vr.get_batch(sample_index)
     video = rearrange(video, "f h w c -> f c h w")
     video = (video / 127.5 - 1.0)
-    return video
+
+    return video, width, height, video_length
 
 
-def get_annotation(video, annotator):
+def get_annotation(video, annotator, annotator_args):
     t2i_transform = torchvision.transforms.ToPILImage()
     annotation = []
-    for frame in video:
+    for frame in tqdm(video):
         pil_frame = t2i_transform(frame)
         if isinstance(annotator, CannyDetector):
-            annotation.append(annotator(pil_frame, low_threshold=100, high_threshold=200))
-        else:
-            annotation.append(annotator(pil_frame))
+            annotator_args["low_threshold"] = 100
+            annotator_args["high_threshold"] = 200
+        annotation.append(annotator(pil_frame, **annotator_args))
     return annotation
 
 
