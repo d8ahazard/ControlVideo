@@ -567,7 +567,29 @@ class ControlNetModel3D(ModelMixin, ConfigMixin):
         )
 
     @classmethod
-    def from_pretrained_2d(cls, pretrained_model_path, control_path=None):
+    def from_pretrained_2d(cls, pretrained_model_path):
+        base_model = ControlNetModel.from_pretrained(pretrained_model_path)
+        config = base_model.config
+        state_dict = base_model.state_dict()
+        config["_class_name"] = cls.__name__
+        config["down_block_types"] = [
+            "CrossAttnDownBlock3D",
+            "CrossAttnDownBlock3D",
+            "CrossAttnDownBlock3D",
+            "DownBlock3D"
+        ]
+
+        model = cls.from_config(config)
+
+        for k, v in model.state_dict().items():
+            if '_temp.' in k:
+                state_dict.update({k: v})
+        model.load_state_dict(state_dict)
+
+        return model
+
+    @classmethod
+    def from_pretrained_2d_og(cls, pretrained_model_path, control_path=None):
         config_file = os.path.join(pretrained_model_path, 'config.json')
         if not os.path.isfile(config_file):
             raise RuntimeError(f"{config_file} does not exist")
