@@ -70,17 +70,17 @@ class MultiControlNetModel3D(ModelMixin):
         self.nets = nn.ModuleList(controlnets)
 
     def forward(
-        self,
-        sample: torch.FloatTensor,
-        timestep: Union[torch.Tensor, float, int],
-        encoder_hidden_states: torch.Tensor,
-        controlnet_cond: List[List[torch.tensor]],
-        conditioning_scale: List[float],
-        class_labels: Optional[torch.Tensor] = None,
-        timestep_cond: Optional[torch.Tensor] = None,
-        attention_mask: Optional[torch.Tensor] = None,
-        cross_attention_kwargs: Optional[Dict[str, Any]] = None,
-        return_dict: bool = True,
+            self,
+            sample: torch.FloatTensor,
+            timestep: Union[torch.Tensor, float, int],
+            encoder_hidden_states: torch.Tensor,
+            controlnet_cond: List[List[torch.tensor]],
+            conditioning_scale: List[float],
+            class_labels: Optional[torch.Tensor] = None,
+            timestep_cond: Optional[torch.Tensor] = None,
+            attention_mask: Optional[torch.Tensor] = None,
+            cross_attention_kwargs: Optional[Dict[str, Any]] = None,
+            return_dict: bool = True,
     ) -> Union[ControlNetOutput, Tuple]:
         for i, (image, scale, controlnet) in enumerate(zip(controlnet_cond, conditioning_scale, self.nets)):
             down_samples, mid_sample = controlnet(
@@ -143,14 +143,15 @@ class ControlVideoPipeline(DiffusionPipeline):
     _optional_components = ["safety_checker", "feature_extractor"]
 
     def __init__(
-        self,
-        vae: AutoencoderKL,
-        text_encoder: CLIPTextModel,
-        tokenizer: CLIPTokenizer,
-        unet: UNet3DConditionModel,
-        controlnet: Union[ControlNetModel3D, List[ControlNetModel3D], Tuple[ControlNetModel3D], MultiControlNetModel3D],
-        scheduler: DDIMScheduler,
-        interpolater: IFNet,
+            self,
+            vae: AutoencoderKL,
+            text_encoder: CLIPTextModel,
+            tokenizer: CLIPTokenizer,
+            unet: UNet3DConditionModel,
+            controlnet: Union[
+                ControlNetModel3D, List[ControlNetModel3D], Tuple[ControlNetModel3D], MultiControlNetModel3D],
+            scheduler: DDIMScheduler,
+            interpolater: IFNet,
     ):
         super().__init__()
 
@@ -247,23 +248,23 @@ class ControlVideoPipeline(DiffusionPipeline):
             return self.device
         for module in self.unet.modules():
             if (
-                hasattr(module, "_hf_hook")
-                and hasattr(module._hf_hook, "execution_device")
-                and module._hf_hook.execution_device is not None
+                    hasattr(module, "_hf_hook")
+                    and hasattr(module._hf_hook, "execution_device")
+                    and module._hf_hook.execution_device is not None
             ):
                 return torch.device(module._hf_hook.execution_device)
         return self.device
 
     # Copied from diffusers.pipelines.stable_diffusion.pipeline_stable_diffusion.StableDiffusionPipeline._encode_prompt
     def _encode_prompt(
-        self,
-        prompt,
-        device,
-        num_videos_per_prompt,
-        do_classifier_free_guidance,
-        negative_prompt=None,
-        prompt_embeds: Optional[torch.FloatTensor] = None,
-        negative_prompt_embeds: Optional[torch.FloatTensor] = None,
+            self,
+            prompt,
+            device,
+            num_videos_per_prompt,
+            do_classifier_free_guidance,
+            negative_prompt=None,
+            prompt_embeds: Optional[torch.FloatTensor] = None,
+            negative_prompt_embeds: Optional[torch.FloatTensor] = None,
     ):
         r"""
         Encodes the prompt into text encoder hidden states.
@@ -308,10 +309,10 @@ class ControlVideoPipeline(DiffusionPipeline):
             untruncated_ids = self.tokenizer(prompt, padding="longest", return_tensors="pt").input_ids
 
             if untruncated_ids.shape[-1] >= text_input_ids.shape[-1] and not torch.equal(
-                text_input_ids, untruncated_ids
+                    text_input_ids, untruncated_ids
             ):
                 removed_text = self.tokenizer.batch_decode(
-                    untruncated_ids[:, self.tokenizer.model_max_length - 1 : -1]
+                    untruncated_ids[:, self.tokenizer.model_max_length - 1: -1]
                 )
                 logger.warning(
                     "The following part of your input was truncated because CLIP can only handle sequences up to"
@@ -393,7 +394,6 @@ class ControlVideoPipeline(DiffusionPipeline):
 
         return prompt_embeds
 
-
     # Copied from diffusers.pipelines.stable_diffusion.pipeline_stable_diffusion.StableDiffusionPipeline.decode_latents
     def decode_latents(self, latents, return_tensor=False):
         video_length = latents.shape[2]
@@ -427,22 +427,22 @@ class ControlVideoPipeline(DiffusionPipeline):
         return extra_step_kwargs
 
     def check_inputs(
-        self,
-        prompt,
-        # image,
-        height,
-        width,
-        callback_steps,
-        negative_prompt=None,
-        prompt_embeds=None,
-        negative_prompt_embeds=None,
-        controlnet_conditioning_scale=1.0,
+            self,
+            prompt,
+            # image,
+            height,
+            width,
+            callback_steps,
+            negative_prompt=None,
+            prompt_embeds=None,
+            negative_prompt_embeds=None,
+            controlnet_conditioning_scale=1.0,
     ):
         if height % 8 != 0 or width % 8 != 0:
             raise ValueError(f"`height` and `width` have to be divisible by 8 but are {height} and {width}.")
 
         if (callback_steps is None) or (
-            callback_steps is not None and (not isinstance(callback_steps, int) or callback_steps <= 0)
+                callback_steps is not None and (not isinstance(callback_steps, int) or callback_steps <= 0)
         ):
             raise ValueError(
                 f"`callback_steps` has to be a positive integer but is {callback_steps} of type"
@@ -500,7 +500,7 @@ class ControlVideoPipeline(DiffusionPipeline):
                 raise TypeError("For single controlnet: `controlnet_conditioning_scale` must be type `float`.")
         elif isinstance(self.controlnet, MultiControlNetModel3D):
             if isinstance(controlnet_conditioning_scale, list) and len(controlnet_conditioning_scale) != len(
-                self.controlnet.nets
+                    self.controlnet.nets
             ):
                 raise ValueError(
                     "For multiple controlnets: When `controlnet_conditioning_scale` is specified as `list`, it must have"
@@ -542,7 +542,7 @@ class ControlVideoPipeline(DiffusionPipeline):
             )
 
     def prepare_image(
-        self, image, width, height, batch_size, num_videos_per_prompt, device, dtype, do_classifier_free_guidance
+            self, image, width, height, batch_size, num_videos_per_prompt, device, dtype, do_classifier_free_guidance
     ):
         if not isinstance(image, torch.Tensor):
             if isinstance(image, PIL.Image.Image):
@@ -586,7 +586,7 @@ class ControlVideoPipeline(DiffusionPipeline):
 
     # Copied from diffusers.pipelines.stable_diffusion.pipeline_stable_diffusion.StableDiffusionPipeline.prepare_latents
     def prepare_latents(self, batch_size, num_channels_latents, video_length, height, width, dtype, \
-                    device, generator, latents=None, same_frame_noise=True):
+                        device, generator, latents=None, same_frame_noise=True):
         if isinstance(generator, list) and len(generator) != batch_size:
             raise ValueError(
                 f"You have passed a list of generators of length {len(generator)}, but requested an effective batch"
@@ -595,14 +595,17 @@ class ControlVideoPipeline(DiffusionPipeline):
 
         if latents is None:
             if same_frame_noise:
-                shape = (batch_size, num_channels_latents, 1, height // self.vae_scale_factor, width // self.vae_scale_factor)
+                shape = (
+                batch_size, num_channels_latents, 1, height // self.vae_scale_factor, width // self.vae_scale_factor)
                 latents = randn_tensor(shape, generator=generator, device=device, dtype=dtype)
                 latents = latents.repeat(1, 1, video_length, 1, 1)
             else:
-                shape = (batch_size, num_channels_latents, video_length, height // self.vae_scale_factor, width // self.vae_scale_factor)
+                shape = (batch_size, num_channels_latents, video_length, height // self.vae_scale_factor,
+                         width // self.vae_scale_factor)
                 latents = randn_tensor(shape, generator=generator, device=device, dtype=dtype)
         else:
-            shape = (batch_size, num_channels_latents, video_length, height // self.vae_scale_factor, width // self.vae_scale_factor)
+            shape = (batch_size, num_channels_latents, video_length, height // self.vae_scale_factor,
+                     width // self.vae_scale_factor)
             if latents.shape != shape:
                 raise ValueError(f"Unexpected latents shape, got {latents.shape}, expected {shape}")
             latents = latents.to(device)
@@ -638,29 +641,30 @@ class ControlVideoPipeline(DiffusionPipeline):
 
     # override DiffusionPipeline
     def save_pretrained(
-        self,
-        save_directory: Union[str, os.PathLike],
-        safe_serialization: bool = False,
-        variant: Optional[str] = None,
+            self,
+            save_directory: Union[str, os.PathLike],
+            safe_serialization: bool = False,
+            variant: Optional[str] = None,
     ):
         if isinstance(self.controlnet, ControlNetModel3D):
             super().save_pretrained(save_directory, safe_serialization, variant)
         else:
             raise NotImplementedError("Currently, the `save_pretrained()` is not implemented for Multi-ControlNet.")
-    
+
     def get_alpha_prev(self, timestep):
         prev_timestep = timestep - self.scheduler.config.num_train_timesteps // self.scheduler.num_inference_steps
-        alpha_prod_t_prev = self.scheduler.alphas_cumprod[prev_timestep] if prev_timestep >= 0 else self.scheduler.final_alpha_cumprod
+        alpha_prod_t_prev = self.scheduler.alphas_cumprod[
+            prev_timestep] if prev_timestep >= 0 else self.scheduler.final_alpha_cumprod
         return alpha_prod_t_prev
 
     def get_slide_window_indices(self, video_length, window_size):
-        assert window_size >=3 
-        key_frame_indices = np.arange(0, video_length, window_size-1).tolist()
+        assert window_size >= 3
+        key_frame_indices = np.arange(0, video_length, window_size - 1).tolist()
 
         # Append last index
-        if key_frame_indices[-1] != (video_length-1):
-            key_frame_indices.append(video_length-1)
-        
+        if key_frame_indices[-1] != (video_length - 1):
+            key_frame_indices.append(video_length - 1)
+
         slices = np.split(np.arange(video_length), key_frame_indices)
         inter_frame_list = []
         for s in slices:
@@ -668,32 +672,33 @@ class ControlVideoPipeline(DiffusionPipeline):
                 continue
             inter_frame_list.append(s[1:].tolist())
         return key_frame_indices, inter_frame_list
-        
+
     @torch.no_grad()
     def __call__(
-        self,
-        prompt: Union[str, List[str]] = None,
-        video_length: Optional[int] = 1,
-        frames: Union[List[torch.FloatTensor], List[PIL.Image.Image], List[List[torch.FloatTensor]], List[List[PIL.Image.Image]]] = None,
-        height: Optional[int] = None,
-        width: Optional[int] = None,
-        num_inference_steps: int = 50,
-        guidance_scale: float = 7.5,
-        negative_prompt: Optional[Union[str, List[str]]] = None,
-        num_videos_per_prompt: Optional[int] = 1,
-        eta: float = 0.0,
-        generator: Optional[Union[torch.Generator, List[torch.Generator]]] = None,
-        latents: Optional[torch.FloatTensor] = None,
-        prompt_embeds: Optional[torch.FloatTensor] = None,
-        negative_prompt_embeds: Optional[torch.FloatTensor] = None,
-        output_type: Optional[str] = "tensor",
-        return_dict: bool = True,
-        callback: Optional[Callable[[int, int, torch.FloatTensor], None]] = None,
-        callback_steps: int = 1,
-        cross_attention_kwargs: Optional[Dict[str, Any]] = None,
-        controlnet_conditioning_scale: Union[float, List[float]] = 1.0,
-        smooth_steps: List = [19, 20],
-        **kwargs,
+            self,
+            prompt: Union[str, List[str]] = None,
+            video_length: Optional[int] = 1,
+            frames: Union[List[torch.FloatTensor], List[PIL.Image.Image], List[List[torch.FloatTensor]], List[
+                List[PIL.Image.Image]]] = None,
+            height: Optional[int] = None,
+            width: Optional[int] = None,
+            num_inference_steps: int = 50,
+            guidance_scale: float = 7.5,
+            negative_prompt: Optional[Union[str, List[str]]] = None,
+            num_videos_per_prompt: Optional[int] = 1,
+            eta: float = 0.0,
+            generator: Optional[Union[torch.Generator, List[torch.Generator]]] = None,
+            latents: Optional[torch.FloatTensor] = None,
+            prompt_embeds: Optional[torch.FloatTensor] = None,
+            negative_prompt_embeds: Optional[torch.FloatTensor] = None,
+            output_type: Optional[str] = "tensor",
+            return_dict: bool = True,
+            callback: Optional[Callable[[int, int, torch.FloatTensor], None]] = None,
+            callback_steps: int = 1,
+            cross_attention_kwargs: Optional[Dict[str, Any]] = None,
+            controlnet_conditioning_scale: Union[float, List[float]] = 1.0,
+            smooth_steps: List = [19, 20],
+            **kwargs,
     ):
         r"""
         Function invoked when calling the pipeline for generation.
@@ -881,7 +886,6 @@ class ControlVideoPipeline(DiffusionPipeline):
         # 7. Prepare extra step kwargs. TODO: Logic should ideally just be moved out of the pipeline
         extra_step_kwargs = self.prepare_extra_step_kwargs(generator, eta)
 
-
         # Prepare video indices if performing smoothing
         if len(smooth_steps) > 0:
             video_indices = np.arange(video_length)
@@ -926,26 +930,26 @@ class ControlVideoPipeline(DiffusionPipeline):
                 step_dict = self.scheduler.step(noise_pred, t, latents, **extra_step_kwargs)
                 latents = step_dict.prev_sample
                 pred_original_sample = step_dict.pred_original_sample
-                
+
                 # Smooth videos
                 if (num_inference_steps - i) in smooth_steps:
                     pred_video = self.decode_latents(pred_original_sample, return_tensor=True)  # b c f h w
                     pred_video = rearrange(pred_video, "b c f h w -> b f c h w")
                     for b_i in range(len(pred_video)):
                         if i % 2 == 0:
-                            for v_i in range(len(zero_indices)-1):
+                            for v_i in range(len(zero_indices) - 1):
                                 s_frame = pred_video[b_i][zero_indices[v_i]].unsqueeze(0)
-                                e_frame = pred_video[b_i][zero_indices[v_i+1]].unsqueeze(0)
+                                e_frame = pred_video[b_i][zero_indices[v_i + 1]].unsqueeze(0)
                                 pred_video[b_i][one_indices[v_i]] = self.interpolater.inference(s_frame, e_frame)[0]
                         else:
                             if video_length % 2 == 1:
-                                tmp_one_indices = [0] + one_indices.tolist() + [video_length-1]
+                                tmp_one_indices = [0] + one_indices.tolist() + [video_length - 1]
                             else:
                                 tmp_one_indices = [0] + one_indices.tolist()
 
-                            for v_i in range(len(tmp_one_indices)-1):
+                            for v_i in range(len(tmp_one_indices) - 1):
                                 s_frame = pred_video[b_i][tmp_one_indices[v_i]].unsqueeze(0)
-                                e_frame = pred_video[b_i][tmp_one_indices[v_i+1]].unsqueeze(0)
+                                e_frame = pred_video[b_i][tmp_one_indices[v_i + 1]].unsqueeze(0)
                                 pred_video[b_i][zero_indices[v_i]] = self.interpolater.inference(s_frame, e_frame)[0]
                     pred_video = rearrange(pred_video, "b f c h w -> (b f) c h w")
                     pred_video = 2.0 * pred_video - 1.0
@@ -953,17 +957,16 @@ class ControlVideoPipeline(DiffusionPipeline):
                     pred_original_sample = self.vae.encode(pred_video).latent_dist.sample(generator)
                     pred_original_sample *= self.vae.config.scaling_factor
                     pred_original_sample = rearrange(pred_original_sample, "(b f) c h w -> b c f h w", f=video_length)
-                    
+
                     # predict xt-1 with smoothed x0
-                    alpha_prod_t_prev =self.get_alpha_prev(t)
+                    alpha_prod_t_prev = self.get_alpha_prev(t)
                     # preserve more details
                     # pred_original_sample = ori_pred_original_sample * alpha_prod_t_prev + (1 - alpha_prod_t_prev) * pred_original_sample
                     # compute "direction pointing to x_t" of formula (12) from https://arxiv.org/pdf/2010.02502.pdf
                     pred_sample_direction = (1 - alpha_prod_t_prev) ** (0.5) * noise_pred
                     # compute x_t without "random noise" of formula (12) from https://arxiv.org/pdf/2010.02502.pdf
                     latents = alpha_prod_t_prev ** (0.5) * pred_original_sample + pred_sample_direction
-                    
-                    
+
                 # call the callback, if provided
                 if i == len(timesteps) - 1 or ((i + 1) > num_warmup_steps and (i + 1) % self.scheduler.order == 0):
                     progress_bar.update()
@@ -993,30 +996,31 @@ class ControlVideoPipeline(DiffusionPipeline):
 
     @torch.no_grad()
     def generate_long_video(
-        self,
-        prompt: Union[str, List[str]] = None,
-        video_length: Optional[int] = 1,
-        frames: Union[List[torch.FloatTensor], List[PIL.Image.Image], List[List[torch.FloatTensor]], List[List[PIL.Image.Image]]] = None,
-        height: Optional[int] = None,
-        width: Optional[int] = None,
-        num_inference_steps: int = 50,
-        guidance_scale: float = 7.5,
-        negative_prompt: Optional[Union[str, List[str]]] = None,
-        num_videos_per_prompt: Optional[int] = 1,
-        eta: float = 0.0,
-        generator: Optional[Union[torch.Generator, List[torch.Generator]]] = None,
-        latents: Optional[torch.FloatTensor] = None,
-        prompt_embeds: Optional[torch.FloatTensor] = None,
-        negative_prompt_embeds: Optional[torch.FloatTensor] = None,
-        output_type: Optional[str] = "tensor",
-        return_dict: bool = True,
-        callback: Optional[Callable[[int, int, torch.FloatTensor], None]] = None,
-        callback_steps: int = 1,
-        cross_attention_kwargs: Optional[Dict[str, Any]] = None,
-        controlnet_conditioning_scale: Union[float, List[float]] = 1.0,
-        smooth_steps: List = [19, 20],
-        window_size: int = 8,
-        **kwargs,
+            self,
+            prompt: Union[str, List[str]] = None,
+            video_length: Optional[int] = 1,
+            frames: Union[List[torch.FloatTensor], List[PIL.Image.Image], List[List[torch.FloatTensor]], List[
+                List[PIL.Image.Image]]] = None,
+            height: Optional[int] = None,
+            width: Optional[int] = None,
+            num_inference_steps: int = 50,
+            guidance_scale: float = 7.5,
+            negative_prompt: Optional[Union[str, List[str]]] = None,
+            num_videos_per_prompt: Optional[int] = 1,
+            eta: float = 0.0,
+            generator: Optional[Union[torch.Generator, List[torch.Generator]]] = None,
+            latents: Optional[torch.FloatTensor] = None,
+            prompt_embeds: Optional[torch.FloatTensor] = None,
+            negative_prompt_embeds: Optional[torch.FloatTensor] = None,
+            output_type: Optional[str] = "tensor",
+            return_dict: bool = True,
+            callback: Optional[Callable[[int, int, torch.FloatTensor], None]] = None,
+            callback_steps: int = 1,
+            cross_attention_kwargs: Optional[Dict[str, Any]] = None,
+            controlnet_conditioning_scale: Union[float, List[float]] = 1.0,
+            smooth_steps: List = [19, 20],
+            window_size: int = 8,
+            **kwargs,
     ):
         r"""
         Function invoked when calling the pipeline for generation.
@@ -1188,7 +1192,7 @@ class ControlVideoPipeline(DiffusionPipeline):
         timesteps = self.scheduler.timesteps
 
         # 6. Prepare latent variables
-        num_channels_latents = self.unet.in_channels
+        num_channels_latents = self.unet.config.in_channels
         latents = self.prepare_latents(
             batch_size * num_videos_per_prompt,
             num_channels_latents,
@@ -1224,7 +1228,7 @@ class ControlVideoPipeline(DiffusionPipeline):
                 latent_model_input = self.scheduler.scale_model_input(latent_model_input, t)
                 noise_pred = torch.zeros_like(latents)
                 pred_original_sample = torch.zeros_like(latents)
-                
+
                 # 8.1 Key frames
                 # controlnet(s) inference
                 key_down_block_res_samples, key_mid_block_res_sample = self.controlnet(
@@ -1249,16 +1253,18 @@ class ControlVideoPipeline(DiffusionPipeline):
                 # perform guidance
                 if do_classifier_free_guidance:
                     noise_pred_uncond, noise_pred_text = key_noise_pred.chunk(2)
-                    noise_pred[:, :, key_frame_indices] = noise_pred_uncond + guidance_scale * (noise_pred_text - noise_pred_uncond)
+                    noise_pred[:, :, key_frame_indices] = noise_pred_uncond + guidance_scale * (
+                                noise_pred_text - noise_pred_uncond)
 
                 # compute the previous noisy sample x_t -> x_t-1
-                key_step_dict = self.scheduler.step(noise_pred[:, :, key_frame_indices], t, latents[:, :, key_frame_indices], **extra_step_kwargs)
+                key_step_dict = self.scheduler.step(noise_pred[:, :, key_frame_indices], t,
+                                                    latents[:, :, key_frame_indices], **extra_step_kwargs)
                 latents[:, :, key_frame_indices] = key_step_dict.prev_sample
                 pred_original_sample[:, :, key_frame_indices] = key_step_dict.pred_original_sample
 
                 # 8.2 compute interval frames
                 for f_i, frame_ids in enumerate(inter_frame_list):
-                    input_frame_ids = key_frame_indices[f_i:f_i+2] + frame_ids
+                    input_frame_ids = key_frame_indices[f_i:f_i + 2] + frame_ids
                     # controlnet(s) inference
                     inter_down_block_res_samples, inter_mid_block_res_sample = self.controlnet(
                         latent_model_input[:, :, input_frame_ids],
@@ -1282,47 +1288,48 @@ class ControlVideoPipeline(DiffusionPipeline):
                     # perform guidance
                     if do_classifier_free_guidance:
                         noise_pred_uncond, noise_pred_text = inter_noise_pred[:, :, 2:].chunk(2)
-                        noise_pred[:, :, frame_ids] = noise_pred_uncond + guidance_scale * (noise_pred_text - noise_pred_uncond)
+                        noise_pred[:, :, frame_ids] = noise_pred_uncond + guidance_scale * (
+                                    noise_pred_text - noise_pred_uncond)
 
                     # compute the previous noisy sample x_t -> x_t-1
-                    step_dict = self.scheduler.step(noise_pred[:, :, frame_ids], t, latents[:, :, frame_ids], **extra_step_kwargs)
+                    step_dict = self.scheduler.step(noise_pred[:, :, frame_ids], t, latents[:, :, frame_ids],
+                                                    **extra_step_kwargs)
                     latents[:, :, frame_ids] = step_dict.prev_sample
                     pred_original_sample[:, :, frame_ids] = step_dict.pred_original_sample
-                
+
                 # Smooth videos
                 if (num_inference_steps - i) in smooth_steps:
                     pred_video = self.decode_latents(pred_original_sample, return_tensor=True)  # b c f h w
                     pred_video = rearrange(pred_video, "b c f h w -> b f c h w")
                     for b_i in range(len(pred_video)):
                         if i % 2 == 0:
-                            for v_i in range(len(zero_indices)-1):
+                            for v_i in range(len(zero_indices) - 1):
                                 s_frame = pred_video[b_i][zero_indices[v_i]].unsqueeze(0)
-                                e_frame = pred_video[b_i][zero_indices[v_i+1]].unsqueeze(0)
+                                e_frame = pred_video[b_i][zero_indices[v_i + 1]].unsqueeze(0)
                                 pred_video[b_i][one_indices[v_i]] = self.interpolater.inference(s_frame, e_frame)[0]
                         else:
                             if video_length % 2 == 1:
-                                tmp_one_indices = [0] + one_indices.tolist() + [video_length-1]
+                                tmp_one_indices = [0] + one_indices.tolist() + [video_length - 1]
                             else:
                                 tmp_one_indices = [0] + one_indices.tolist()
-                            for v_i in range(len(tmp_one_indices)-1):
+                            for v_i in range(len(tmp_one_indices) - 1):
                                 s_frame = pred_video[b_i][tmp_one_indices[v_i]].unsqueeze(0)
-                                e_frame = pred_video[b_i][tmp_one_indices[v_i+1]].unsqueeze(0)
+                                e_frame = pred_video[b_i][tmp_one_indices[v_i + 1]].unsqueeze(0)
                                 pred_video[b_i][zero_indices[v_i]] = self.interpolater.inference(s_frame, e_frame)[0]
                     pred_video = rearrange(pred_video, "b f c h w -> (b f) c h w")
                     pred_video = 2.0 * pred_video - 1.0
                     for v_i in range(len(pred_video)):
-                        pred_original_sample[:, :, v_i] = self.vae.encode(pred_video[v_i:v_i+1]).latent_dist.sample(generator)
+                        pred_original_sample[:, :, v_i] = self.vae.encode(pred_video[v_i:v_i + 1]).latent_dist.sample(
+                            generator)
                         pred_original_sample[:, :, v_i] *= self.vae.config.scaling_factor
 
-                    
                     # predict xt-1 with smoothed x0
-                    alpha_prod_t_prev =self.get_alpha_prev(t)
+                    alpha_prod_t_prev = self.get_alpha_prev(t)
                     # preserve more details
                     pred_sample_direction = (1 - alpha_prod_t_prev) ** (0.5) * noise_pred
                     # compute x_t without "random noise" of formula (12) from https://arxiv.org/pdf/2010.02502.pdf
                     latents = alpha_prod_t_prev ** (0.5) * pred_original_sample + pred_sample_direction
-                    
-                    
+
                 # call the callback, if provided
                 if i == len(timesteps) - 1 or ((i + 1) > num_warmup_steps and (i + 1) % self.scheduler.order == 0):
                     progress_bar.update()

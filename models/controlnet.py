@@ -16,6 +16,7 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 import os
 import json
 
+import safetensors.torch
 import torch
 from torch import nn
 from torch.nn import functional as F
@@ -55,10 +56,10 @@ class ControlNetConditioningEmbedding(nn.Module):
     """
 
     def __init__(
-        self,
-        conditioning_embedding_channels: int,
-        conditioning_channels: int = 3,
-        block_out_channels: Tuple[int] = (16, 32, 96, 256),
+            self,
+            conditioning_embedding_channels: int,
+            conditioning_channels: int = 3,
+            block_out_channels: Tuple[int] = (16, 32, 96, 256),
     ):
         super().__init__()
 
@@ -94,35 +95,35 @@ class ControlNetModel3D(ModelMixin, ConfigMixin):
 
     @register_to_config
     def __init__(
-        self,
-        in_channels: int = 4,
-        flip_sin_to_cos: bool = True,
-        freq_shift: int = 0,
-        down_block_types: Tuple[str] = (
-            "CrossAttnDownBlock3D",
-            "CrossAttnDownBlock3D",
-            "CrossAttnDownBlock3D",
-            "DownBlock3D",
-        ),
-        only_cross_attention: Union[bool, Tuple[bool]] = False,
-        block_out_channels: Tuple[int] = (320, 640, 1280, 1280),
-        layers_per_block: int = 2,
-        downsample_padding: int = 1,
-        mid_block_scale_factor: float = 1,
-        act_fn: str = "silu",
-        norm_num_groups: Optional[int] = 32,
-        norm_eps: float = 1e-5,
-        cross_attention_dim: int = 1280,
-        attention_head_dim: Union[int, Tuple[int]] = 8,
-        dual_cross_attention: bool = False,
-        use_linear_projection: bool = False,
-        class_embed_type: Optional[str] = None,
-        num_class_embeds: Optional[int] = None,
-        upcast_attention: bool = False,
-        resnet_time_scale_shift: str = "default",
-        projection_class_embeddings_input_dim: Optional[int] = None,
-        controlnet_conditioning_channel_order: str = "rgb",
-        conditioning_embedding_out_channels: Optional[Tuple[int]] = (16, 32, 96, 256),
+            self,
+            in_channels: int = 4,
+            flip_sin_to_cos: bool = True,
+            freq_shift: int = 0,
+            down_block_types: Tuple[str] = (
+                    "CrossAttnDownBlock3D",
+                    "CrossAttnDownBlock3D",
+                    "CrossAttnDownBlock3D",
+                    "DownBlock3D",
+            ),
+            only_cross_attention: Union[bool, Tuple[bool]] = False,
+            block_out_channels: Tuple[int] = (320, 640, 1280, 1280),
+            layers_per_block: int = 2,
+            downsample_padding: int = 1,
+            mid_block_scale_factor: float = 1,
+            act_fn: str = "silu",
+            norm_num_groups: Optional[int] = 32,
+            norm_eps: float = 1e-5,
+            cross_attention_dim: int = 1280,
+            attention_head_dim: Union[int, Tuple[int]] = 8,
+            dual_cross_attention: bool = False,
+            use_linear_projection: bool = False,
+            class_embed_type: Optional[str] = None,
+            num_class_embeds: Optional[int] = None,
+            upcast_attention: bool = False,
+            resnet_time_scale_shift: str = "default",
+            projection_class_embeddings_input_dim: Optional[int] = None,
+            controlnet_conditioning_channel_order: str = "rgb",
+            conditioning_embedding_out_channels: Optional[Tuple[int]] = (16, 32, 96, 256),
     ):
         super().__init__()
 
@@ -267,11 +268,11 @@ class ControlNetModel3D(ModelMixin, ConfigMixin):
 
     @classmethod
     def from_unet(
-        cls,
-        unet: UNet2DConditionModel,
-        controlnet_conditioning_channel_order: str = "rgb",
-        conditioning_embedding_out_channels: Optional[Tuple[int]] = (16, 32, 96, 256),
-        load_weights_from_unet: bool = True,
+            cls,
+            unet: UNet2DConditionModel,
+            controlnet_conditioning_channel_order: str = "rgb",
+            conditioning_embedding_out_channels: Optional[Tuple[int]] = (16, 32, 96, 256),
+            load_weights_from_unet: bool = True,
     ):
         r"""
         Instantiate Controlnet class from UNet2DConditionModel.
@@ -446,17 +447,17 @@ class ControlNetModel3D(ModelMixin, ConfigMixin):
             module.gradient_checkpointing = value
 
     def forward(
-        self,
-        sample: torch.FloatTensor,
-        timestep: Union[torch.Tensor, float, int],
-        encoder_hidden_states: torch.Tensor,
-        controlnet_cond: torch.FloatTensor,
-        conditioning_scale: float = 1.0,
-        class_labels: Optional[torch.Tensor] = None,
-        timestep_cond: Optional[torch.Tensor] = None,
-        attention_mask: Optional[torch.Tensor] = None,
-        cross_attention_kwargs: Optional[Dict[str, Any]] = None,
-        return_dict: bool = True,
+            self,
+            sample: torch.FloatTensor,
+            timestep: Union[torch.Tensor, float, int],
+            encoder_hidden_states: torch.Tensor,
+            controlnet_cond: torch.FloatTensor,
+            conditioning_scale: float = 1.0,
+            class_labels: Optional[torch.Tensor] = None,
+            timestep_cond: Optional[torch.Tensor] = None,
+            attention_mask: Optional[torch.Tensor] = None,
+            cross_attention_kwargs: Optional[Dict[str, Any]] = None,
+            return_dict: bool = True,
     ) -> Union[ControlNetOutput, Tuple]:
         # check channel order
         channel_order = self.config.controlnet_conditioning_channel_order
@@ -603,7 +604,7 @@ class ControlNetModel3D(ModelMixin, ConfigMixin):
             "DownBlock3D"
         ]
 
-        from diffusers.utils import WEIGHTS_NAME
+        from diffusers.utils import WEIGHTS_NAME, SAFETENSORS_WEIGHTS_NAME
         model = cls.from_config(config)
         if control_path is None:
             model_file = os.path.join(pretrained_model_path, WEIGHTS_NAME)
@@ -628,6 +629,7 @@ class ControlNetModel3D(ModelMixin, ConfigMixin):
         model.load_state_dict(state_dict)
 
         return model
+
 
 def zero_module(module):
     for p in module.parameters():

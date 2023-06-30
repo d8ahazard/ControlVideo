@@ -3,6 +3,7 @@ import imageio
 import numpy as np
 from typing import Union
 import decord
+
 decord.bridge.set_bridge('torch')
 import torch
 import torchvision
@@ -12,6 +13,7 @@ from tqdm import tqdm
 from einops import rearrange
 
 from controlnet_aux import CannyDetector
+
 
 def save_videos_grid(videos: torch.Tensor, path: str, rescale=False, n_rows=4, fps=8):
     videos = rearrange(videos, "b c t h w -> t b c h w")
@@ -26,6 +28,7 @@ def save_videos_grid(videos: torch.Tensor, path: str, rescale=False, n_rows=4, f
 
     os.makedirs(os.path.dirname(path), exist_ok=True)
     imageio.mimsave(path, outputs, fps=fps)
+
 
 def save_videos_grid_pil(videos: List[PIL.Image.Image], path: str, rescale=False, n_rows=4, fps=8):
     videos = rearrange(videos, "b c t h w -> t b c h w")
@@ -60,6 +63,7 @@ def get_annotation(video, annotator):
         else:
             annotation.append(annotator(pil_frame))
     return annotation
+
 
 # DDIM Inversion
 @torch.no_grad()

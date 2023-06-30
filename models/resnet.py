@@ -17,6 +17,7 @@ class InflatedConv3d(nn.Conv2d):
 
         return x
 
+
 class TemporalConv1d(nn.Conv1d):
     def forward(self, x):
         b, c, f, h, w = x.shape
@@ -117,21 +118,21 @@ class Downsample3D(nn.Module):
 
 class ResnetBlock3D(nn.Module):
     def __init__(
-        self,
-        *,
-        in_channels,
-        out_channels=None,
-        conv_shortcut=False,
-        dropout=0.0,
-        temb_channels=512,
-        groups=32,
-        groups_out=None,
-        pre_norm=True,
-        eps=1e-6,
-        non_linearity="swish",
-        time_embedding_norm="default",
-        output_scale_factor=1.0,
-        use_in_shortcut=None,
+            self,
+            *,
+            in_channels,
+            out_channels=None,
+            conv_shortcut=False,
+            dropout=0.0,
+            temb_channels=512,
+            groups=32,
+            groups_out=None,
+            pre_norm=True,
+            eps=1e-6,
+            non_linearity="swish",
+            time_embedding_norm="default",
+            output_scale_factor=1.0,
+            use_in_shortcut=None,
     ):
         super().__init__()
         self.pre_norm = pre_norm
